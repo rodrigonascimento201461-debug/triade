@@ -1,0 +1,16 @@
+# CUIDADO: nada de `**/node_modules` aqui — isso já causou um bug real em
+# produção. `backend/public/assets/node_modules/@expo-google-fonts/...` é um
+# nome de pasta legítimo (o Metro/Expo espelha o caminho de origem do require()
+# no export web), não uma dependência instalada. Um glob genérico apagava
+# essas fontes da imagem silenciosamente — sem erro de build, o app só
+# carregava sem elas. Exclua só os node_modules DE VERDADE, por caminho exato.
+backend/node_modules
+shared/node_modules
+
+**/.next
+**/.expo
+**/.venv
+**/__pycache__
+**/.git
+astro-calc-service
+mobile

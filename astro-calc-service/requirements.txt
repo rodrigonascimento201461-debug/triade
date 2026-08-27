@@ -1,0 +1,10 @@
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+pydantic==2.13.4
+requests==2.34.2
+timezonefinder==8.3.0
+PyMeeus==0.5.12
+lunardate==0.3.0
+tzdata==2026.3
+pytest==9.1.1
+httpx==0.28.1

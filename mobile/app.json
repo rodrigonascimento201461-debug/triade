@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "TRÍADE",
+    "slug": "triade",
+    "scheme": "triade",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "backgroundColor": "#f3f2f2",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.delobo.triade"
+    },
+    "android": {
+      "package": "com.delobo.triade",
+      "adaptiveIcon": {
+        "backgroundColor": "#f3f2f2"
+      },
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-asset"
+    ],
+    "experiments": {
+      "typedRoutes": false
+    }
+  }
+}

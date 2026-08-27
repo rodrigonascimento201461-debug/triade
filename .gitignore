@@ -1,0 +1,78 @@
+# ---------- Node / JS (mobile + backend) ----------
+# Caminho fixo, não `node_modules/` genérico: esse padrão também casava com
+# `backend/public/assets/node_modules/@expo-google-fonts/...`, que não é uma
+# dependência — é o nome real da pasta de fontes no export web do Expo
+# (Metro espelha o caminho de origem do require()). Um `railway up` respeita
+# .gitignore no upload; o padrão genérico apagava as fontes silenciosamente
+# antes mesmo de chegar no build (bug real encontrado em produção — a app
+# carregava com texto sem estilo nenhum, sem erro de console).
+/node_modules/
+backend/node_modules/
+mobile/node_modules/
+shared/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# ---------- Ambiente ----------
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ---------- Expo / React Native ----------
+.expo/
+.expo-shared/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+ios/
+android/
+.metro-health-check*
+expo-env.d.ts
+
+# ---------- Next.js ----------
+.next/
+out/
+.vercel/
+next-env.d.ts
+*.tsbuildinfo
+
+# ---------- Python (astro-calc-service) ----------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+ENV/
+pip-log.txt
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+*.egg-info/
+build/
+.eggs/
+
+# ---------- Editores / SO ----------
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
