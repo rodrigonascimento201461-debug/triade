@@ -1,0 +1,21 @@
+# Blueprint do Render para o astro-calc-service (Python/FastAPI).
+#
+# Deploy: https://render.com/deploy?repo=https://github.com/rodrigonascimento201461-debug/triade
+# (Render pede login/GitHub, mostra este blueprint, você confirma — cria o
+# serviço no plano gratuito. Depois disso, todo `git push` faz deploy
+# automático sozinho, sem precisar rodar nada de novo.)
+#
+# Só astro-calc-service está aqui: backend/ e mobile/ vão para o Netlify,
+# que não roda Python (ver backend/README.md, seção "App web").
+services:
+  - type: web
+    name: astro-calc
+    runtime: python
+    plan: free
+    rootDir: astro-calc-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
