@@ -1,10 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // `shared/` fica fora da pasta do projeto. Só tipos são importados de lá
-  // (apagados na compilação), mas o Next precisa saber que o diretório raiz do
-  // traçado de arquivos é um nível acima.
-  outputFileTracingRoot: new URL('..', import.meta.url).pathname,
+  // @netlify/plugin-nextjs (Netlify) exige isso — sem `output: 'standalone'`
+  // ele não encontra `.next/standalone` e falha o deploy com "does not
+  // contain expected Next.js build output" (mensagem enganosa, não é sobre
+  // versão do Next). Não quebra `next start` (usado no deploy Railway
+  // antigo) — standalone é só um artefato extra gerado no build.
+  output: 'standalone',
 };
 
 export default nextConfig;

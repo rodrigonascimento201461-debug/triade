@@ -76,3 +76,6 @@ ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 .DS_Store
+
+# Local Netlify folder
+.netlify
