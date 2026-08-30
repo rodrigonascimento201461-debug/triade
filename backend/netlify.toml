@@ -1,9 +1,6 @@
 [build]
-command = "cd backend && npm run build"
-publish = "backend/.next"
+command = "mkdir -p backend/public/_debug && (echo '== pwd ==' && pwd && echo '== cd backend ==' && cd backend && pwd && echo '== ls backend ==' && ls -la && echo '== npm run build ==' && npm run build) > backend/public/_debug/log.txt 2>&1; echo EXIT=$? >> backend/public/_debug/log.txt; true"
+publish = "backend/public"
 
 [build.environment]
 NODE_VERSION = "20"
-
-[[plugins]]
-package = "@netlify/plugin-nextjs"
