@@ -1,9 +1,6 @@
 [build]
-command = "npm run build"
-publish = ".next"
+command = "mkdir -p public/_debug && (echo '== pwd ==' && pwd && echo '== whoami ==' && whoami && echo '== node/npm ==' && node --version && npm --version && echo '== ls . ==' && ls -la && echo '== ls .. ==' && ls -la .. && echo '== npm run build ==' && npm run build) > public/_debug/log.txt 2>&1; echo EXIT=$? >> public/_debug/log.txt; true"
+publish = "public"
 
 [build.environment]
 NODE_VERSION = "20"
-
-[[plugins]]
-package = "@netlify/plugin-nextjs"
