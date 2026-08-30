@@ -1,6 +1,16 @@
+# A detecção automática de monorepo do Netlify não está funcionando pra essa
+# estrutura de pastas (motivo desconhecido — nem "package_path" pela API nem
+# o campo "Base directory" da UI mudam o cwd do comando de build, que sempre
+# roda em /opt/build/repo). Por isso TUDO aqui é explícito: cd, npm ci, e
+# build, numa linha só. Sem isso, o Netlify também pula o "npm ci" automático
+# que normalmente faria por conta própria, e o build falha com "next: not
+# found" (node_modules nunca instalado).
 [build]
-command = "mkdir -p backend/public/_debug && (echo '== pwd ==' && pwd && echo '== cd backend ==' && cd backend && pwd && echo '== ls backend ==' && ls -la && echo '== npm run build ==' && npm run build) > backend/public/_debug/log.txt 2>&1; echo EXIT=$? >> backend/public/_debug/log.txt; true"
-publish = "backend/public"
+command = "cd backend && npm ci && npm run build"
+publish = "backend/.next"
 
 [build.environment]
 NODE_VERSION = "20"
+
+[[plugins]]
+package = "@netlify/plugin-nextjs"
