@@ -5,6 +5,5 @@ publish = ".next"
 [build.environment]
 NODE_VERSION = "20"
 
-# TESTE TEMPORÁRIO: plugin desativado pra isolar causa do erro de build.
-# [[plugins]]
-# package = "@netlify/plugin-nextjs"
+[[plugins]]
+package = "@netlify/plugin-nextjs"
