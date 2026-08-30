@@ -161,20 +161,34 @@ Todo erro sai como `{ erro: { codigo, mensagem } }` (`ApiErro` em
 ## App web (deploy público)
 
 Além do BFF, este serviço serve o app em `mobile/` como site (export web do
-Expo) — um link público único, sem exigir instalar nada. Rodando ao vivo em
-`https://backend-production-0d97.up.railway.app` (Railway, projeto `triade`).
+Expo) — um link público único, sem exigir instalar nada.
 
-**Como funciona:** `[...catchall]/route.ts` (e `route.ts` na raiz) devolvem o
-mesmo HTML pra qualquer caminho fora de `/api` — é uma SPA, o roteamento
-acontece no cliente (expo-router). `_expo/` e `app-web.html` em `public/` são
-servidos normalmente pelo Next.js.
+**Ao vivo:**
+- App + backend: `https://triade-app.netlify.app` (Netlify, site "triade-app",
+  conectado ao GitHub `rodrigonascimento201461-debug/triade`, deploy automático
+  a cada push em `master`).
+- `astro-calc-service`: `https://astro-calc.onrender.com` (Render, serviço
+  "astro-calc", mesmo repo, `rootDir: astro-calc-service`, deploy automático
+  a cada push).
+
+**Migrou de Railway pra Netlify+Render** porque o trial grátis da Railway
+expirou (passou a exigir cartão). Netlify não roda Python (nem em Functions),
+por isso o serviço de cálculo foi separado pro Render, que tem camada grátis
+real pra isso (com um detalhe: o serviço "dorme" depois de ~15min sem uso, o
+primeiro request depois disso demora ~30-50s pra acordar).
+
+**Como funciona (app web):** `[...catchall]/route.ts` (e `route.ts` na raiz)
+devolvem o mesmo HTML pra qualquer caminho fora de `/api` — é uma SPA, o
+roteamento acontece no cliente (expo-router). `_expo/` e `app-web.html` em
+`public/` são servidos normalmente pelo Next.js.
 
 **Para atualizar o app web depois de mudar algo em `mobile/`:**
 
 ```bash
 cd mobile
 # EXPO_PUBLIC_BACKEND_URL no mobile/.env precisa já apontar pra URL pública
-# deste backend ANTES do build — é embutida no bundle, não lida em runtime.
+# deste backend (https://triade-app.netlify.app) ANTES do build — é
+# embutida no bundle, não lida em runtime.
 npx expo export --platform web --clear
 
 cd ../backend
@@ -184,46 +198,62 @@ cp ../mobile/dist/index.html public/app-web.html
 cp -r ../mobile/dist/assets/node_modules font-assets   # ver por quê abaixo
 
 cd ..
-railway up --service backend --verbose   # da RAIZ do repo, não de backend/
+git add -A && git commit -m "atualiza app web" && git push
+# a Netlify builda e publica sozinha a partir daqui (~1-2min)
 ```
 
-**Por que `font-assets/` na raiz de `backend/`, e não `public/assets/`
-(bug real, já foi encontrado e custou tempo):** o `railway up` **pula
-silenciosamente qualquer diretório chamado `node_modules`**, mesmo que o
-`.gitignore` diga explicitamente pra não ignorar — não é um comportamento de
-`.gitignore`, é hardcoded no CLI do Railway. O export web do Expo gera as
-fontes em `dist/assets/node_modules/@expo-google-fonts/archivo/*.ttf`
-(espelha o caminho de `require()`), então esse diretório nunca subia — sem
-erro 4xx, sem erro de console: a resposta vinha `200` com o HTML da SPA no
-lugar da fonte, e o app carregava com o Archivo trocado pela fonte padrão do
-navegador. A correção: os arquivos moram em `backend/font-assets/` (mesmo
-conteúdo, caminho sem a palavra "node_modules"), e `lib/spa.ts` remapeia a
-URL pública `/assets/node_modules/...` (fixa no bundle, não dá pra mudar) pro
-caminho de disco real. Ver o comentário no topo de `src/lib/spa.ts` para o
-detalhe completo — inclusive um segundo desvio (`dynamic = 'force-dynamic'`
-nas rotas SPA) que fazia parte da mesma investigação mas acabou não sendo a
-causa raiz.
+**Por que `font-assets/` na raiz de `backend/`, e não `public/assets/`**
+(bug real, encontrado tanto no Railway quanto — por um motivo diferente — via
+o mecanismo de deploy do Netlify): o nome da pasta gerada pelo export do Expo
+é `dist/assets/node_modules/@expo-google-fonts/archivo/*.ttf` (espelha o
+caminho de `require()`). Várias ferramentas de deploy tratam qualquer pasta
+chamada `node_modules` de forma especial (ignoram no upload). A correção: os
+arquivos moram em `backend/font-assets/` (mesmo conteúdo, caminho sem a
+palavra "node_modules"), e `lib/spa.ts` remapeia a URL pública
+`/assets/node_modules/...` (fixa no bundle, não dá pra mudar) pro caminho de
+disco real. Ver o comentário no topo de `src/lib/spa.ts`.
 
-**Deploy do `astro-calc-service`:** serviço irmão no mesmo projeto Railway,
-`cd astro-calc-service && railway up --service astro-calc` — não precisa do
-Dockerfile na raiz (não depende de `shared/`), usa Nixpacks normal.
+**netlify.toml — por que tudo é explícito (`cd backend && npm ci && npm run
+build`):** a detecção automática de monorepo do Netlify (campo "Base
+directory"/`package_path`) não funcionou pra essa estrutura de pastas —
+mesmo configurado, o comando de build sempre rodava em `/opt/build/repo`
+(raiz do repo) e o `npm ci` automático era pulado, quebrando com `next: not
+found`. Descoberto forçando o build a "suceder" sempre e escrevendo
+`pwd`/`ls`/erro real num arquivo dentro de `public/` pra poder buscar depois
+via `curl` (não havia acesso aos logs de build pela API/CLI nesse momento).
+Também é por isso que `output: 'standalone'` está em `next.config.mjs`
+(exigido pelo `@netlify/plugin-nextjs`) e `outputFileTracingRoot` usa
+`fileURLToPath` em vez de `new URL(...).pathname` (esse último gera um
+caminho inválido no Windows, tipo `/C:/Projetos/...`).
 
-## O que não foi testado (falta credencial real)
+**`astro-calc-service` no Render:** `render.yaml` na raiz do repo é o
+blueprint (Infrastructure-as-Code) — mas o serviço ao vivo foi criado direto
+via API do Render (`POST /v1/services`), não pelo blueprint, porque o fluxo
+de blueprint pela dashboard exige clique manual de autorização que travou
+repetidamente. O repositório GitHub precisou ficar **público** pra API do
+Render conseguir ler o código sem essa autorização interativa (confirmado
+sem nenhum segredo commitado antes de mudar a visibilidade).
 
-- Nenhuma chamada real à Gemini foi feita (`GEMINI_API_KEY` ainda não existe
-  no ambiente de produção). O caminho de erro (`INTERPRETACAO_INDISPONIVEL`)
-  foi validado em produção (responde 503 de forma tratada); o parsing do
-  JSON/SSE de resposta não rodou contra a API de verdade.
-- Nenhum projeto Supabase real existe ainda. `schema.sql` não rodou contra um
-  banco de verdade; as policies de RLS não foram exercitadas;
-  `cadastro`/`login` respondem 503 tratado em produção, não testados ponta a
-  ponta com dados reais.
+## Estado das credenciais em produção
+
+`GET /api/health` mostra o que está configurado:
+`{"configurado":{"astro_calc":true,"gemini":true,"supabase":false}}` — assim
+em 30/08/2026. `astro_calc` e `gemini` já são reais (chave de verdade,
+serviço de cálculo ao vivo). `supabase` ainda falta: `SUPABASE_URL` /
+`SUPABASE_SERVICE_ROLE_KEY` nunca foram preenchidas, então `cadastro`/`login`
+respondem 503 tratado — o app funciona até aí (onboarding, cálculo real do
+mapa via os 3 endpoints), mas não passa do cadastro de conta.
 
 ## Próximos passos
 
-1. Rodar `supabase/schema.sql` num projeto real, preencher `SUPABASE_URL` /
-   `SUPABASE_SERVICE_ROLE_KEY` / `GEMINI_API_KEY` nas variáveis do serviço
-   `backend` no Railway (`railway variable set ... --service backend`), e
-   testar `cadastro`/`login`/interpretação ponta a ponta com dados reais.
+1. Criar um projeto no [Supabase](https://supabase.com), rodar
+   `supabase/schema.sql` nele, e setar `SUPABASE_URL` /
+   `SUPABASE_SERVICE_ROLE_KEY` nas variáveis de ambiente do site Netlify
+   (`netlify env:set NOME valor --context production`, depois redeploy) —
+   isso destrava cadastro/login/interpretação de ponta a ponta.
 2. Endpoint de refresh de sessão (`refresh_token` → novo `access_token`).
 3. CORS restrito e rate limit antes de abrir de vez ao público.
+4. Considerar deixar o repositório GitHub privado de novo (ficou público só
+   pra desbloquear a API do Render sem exigir autorização manual — ver "App
+   web" acima) — precisaria then reconectar o Render via GitHub App de
+   verdade, não só a API de criação de serviço.
